@@ -1,0 +1,54 @@
+using Cinemachine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Unity.Mathematics;
+using UnityEngine;
+
+namespace YuanshenMovementSystem
+{
+    public class CameraZoom : MonoBehaviour
+    {
+        [SerializeField] [Range(0f, 10f)] private float defaultDistance = 6f;
+        [SerializeField] [Range(0f, 10f)] private float minDistance = 1f;
+        [SerializeField] [Range(0f, 10f)] private float maxDistance = 7f;
+
+        [SerializeField] [Range(0f, 10f)] private float smoothing = 4f;
+        [SerializeField] [Range(0f, 10f)] private float zoomSensitibity = 1f;
+
+        private CinemachineFramingTransposer framingTransposer;
+        private CinemachineInputProvider inputProvider;
+
+        private float currentTargetDistance;
+        private void Awake()
+        {
+            framingTransposer = GetComponent<CinemachineVirtualCamera>().GetCinemachineComponent<CinemachineFramingTransposer>();
+            inputProvider = GetComponent<CinemachineInputProvider>();
+
+            currentTargetDistance = defaultDistance;
+        }
+        private void Update()
+        {
+            Zoom();
+        }
+
+        private void Zoom()
+        {
+            float zoomValue = inputProvider.GetAxisValue(2) * zoomSensitibity;
+
+            currentTargetDistance = Mathf.Clamp(currentTargetDistance + zoomValue, minDistance, maxDistance);
+
+            float currentDistance = framingTransposer.m_CameraDistance;
+
+            if(currentDistance == currentTargetDistance)
+            {
+                return;
+            }
+
+            float lerpedZoomValue = Mathf.Lerp(currentDistance, currentTargetDistance, smoothing * Time.deltaTime);
+
+            framingTransposer.m_CameraDistance = lerpedZoomValue;
+        }
+    }
+}
